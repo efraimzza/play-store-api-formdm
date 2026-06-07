@@ -23,9 +23,9 @@ abstract public class AppListIterator implements Iterator {
         this.googlePlayApi = googlePlayApi;
     }
 
-    public List<DocV2> next() {
+    public List<Item> next() {
         Payload payload;
-        DocV2 rootDoc;
+        Item rootDoc;
         try {
             payload = getPayload();
             rootDoc = getRootDoc(payload);
@@ -41,9 +41,9 @@ abstract public class AppListIterator implements Iterator {
             return next();
         }
         if (null != rootDoc) {
-            return rootDoc.getChildList();
+            return rootDoc.getSubItemList();
         } else {
-            return new ArrayList<DocV2>();
+            return new ArrayList<Item>();
         }
     }
 
@@ -82,31 +82,37 @@ abstract public class AppListIterator implements Iterator {
     protected String findNextPageUrl(SearchResponse searchResponse) {
         if (searchResponse.hasNextPageUrl()) {
             return GooglePlayAPI.FDFE_URL + searchResponse.getNextPageUrl();
-        } else if (searchResponse.getDocCount() > 0) {
-            return findNextPageUrl(searchResponse.getDoc(0));
+        } else if (searchResponse.getItemCount() > 0) {
+            return findNextPageUrl(searchResponse.getItem(0));
         }
         return null;
     }
-
+/*
     protected String findNextPageUrl(ListResponse listResponse) {
-        if (listResponse.getDocCount() > 0) {
-            return findNextPageUrl(listResponse.getDoc(0));
+        if (listResponse.getItemCount() > 0) {
+            return findNextPageUrl(listResponse.getItem(0));
         }
         return null;
+    }*/
+    protected String findNextPageUrl(ListResponse listResponse) {
+     //   if (listResponse.getItemCount() > 0) {
+            return findNextPageUrl(listResponse.getItem());
+     //   }
+    //    return null;
     }
 
-    protected String findNextPageUrl(DocV2 rootDoc) {
+    protected String findNextPageUrl(Item rootDoc) {
         if (rootDoc.hasContainerMetadata() && rootDoc.getContainerMetadata().hasNextPageUrl()) {
             return GooglePlayAPI.FDFE_URL + rootDoc.getContainerMetadata().getNextPageUrl();
         }
-        if (rootDoc.hasRelatedLinks()
-            && rootDoc.getRelatedLinks().hasUnknown1()
-            && rootDoc.getRelatedLinks().getUnknown1().hasUnknown2()
-            && rootDoc.getRelatedLinks().getUnknown1().getUnknown2().hasNextPageUrl()
+        if (rootDoc.hasAnnotations()
+            && rootDoc.getAnnotations().hasAnnotationLink()
+            && rootDoc.getAnnotations().getAnnotationLink().hasResolvedLink()
+            && rootDoc.getAnnotations().getAnnotationLink().getResolvedLink().hasSearchUrl()
         ) {
-            return GooglePlayAPI.FDFE_URL + rootDoc.getRelatedLinks().getUnknown1().getUnknown2().getNextPageUrl();
+            return GooglePlayAPI.FDFE_URL + rootDoc.getAnnotations().getAnnotationLink().getResolvedLink().getSearchUrl();
         }
-        for (DocV2 child: rootDoc.getChildList()) {
+        for (Item child: rootDoc.getSubItemList()) {
             if (!isRootDoc(child)) {
                 continue;
             }
@@ -123,24 +129,36 @@ abstract public class AppListIterator implements Iterator {
      * each of them having a list of items
      * In this case we have to find the apps list and return it
      */
-    protected DocV2 getRootDoc(Payload payload) {
+     /*
+    protected Item getRootDoc(Payload payload) {
         if (null == payload) {
             return null;
         }
-        if (payload.hasSearchResponse() && payload.getSearchResponse().getDocCount() > 0) {
-            return getRootDoc(payload.getSearchResponse().getDoc(0));
-        } else if (payload.hasListResponse() && payload.getListResponse().getDocCount() > 0) {
-            return getRootDoc(payload.getListResponse().getDoc(0));
+        if (payload.hasSearchResponse() && payload.getSearchResponse().getItemCount() > 0) {
+            return getRootDoc(payload.getSearchResponse().getItem(0));
+        } else if (payload.hasListResponse() && payload.getListResponse().getItemCount() > 0) {
+            return getRootDoc(payload.getListResponse().getItem(0));
+        }
+        return null;
+    }*/
+    protected Item getRootDoc(Payload payload) {
+        if (null == payload) {
+            return null;
+        }
+        if (payload.hasSearchResponse() && payload.getSearchResponse().getItemCount() > 0) {
+            return getRootDoc(payload.getSearchResponse().getItem(0));
+        } else if (payload.hasListResponse() /*&& payload.getListResponse().getItemCount() > 0*/) {
+            return getRootDoc(payload.getListResponse().getItem());
         }
         return null;
     }
 
-    protected DocV2 getRootDoc(DocV2 doc) {
+    protected Item getRootDoc(Item doc) {
         if (isRootDoc(doc)) {
             return doc;
         }
-        for (DocV2 child: doc.getChildList()) {
-            DocV2 root = getRootDoc(child);
+        for (Item child: doc.getSubItemList()) {
+            Item root = getRootDoc(child);
             if (null != root) {
                 return root;
             }
@@ -148,8 +166,8 @@ abstract public class AppListIterator implements Iterator {
         return null;
     }
 
-    protected boolean isRootDoc(DocV2 doc) {
-        return doc.getChildCount() > 0 && doc.getChild(0).getBackendId() == 3 && doc.getChild(0).getDocType() == 1;
+    protected boolean isRootDoc(Item doc) {
+        return doc.getSubItemCount() > 0 && doc.getSubItem(0).getCategoryId() == 3 && doc.getSubItem(0).getType() == 1;
     }
 
     private boolean nextPageStartsFromZero() {

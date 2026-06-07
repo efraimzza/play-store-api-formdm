@@ -13,7 +13,7 @@ public class SearchIterator extends AppListIterator {
 
     static private final String DOCID_FRAGMENT_MORE_RESULTS = "more_results";
 
-    private DocV2 mainResult;
+    private Item mainResult;
     private String query;
 
     public SearchIterator(GooglePlayAPI googlePlayApi, String query) {
@@ -31,8 +31,8 @@ public class SearchIterator extends AppListIterator {
     }
 
     @Override
-    public List<DocV2> next() {
-        List<DocV2> next = new ArrayList<DocV2>(super.next());
+    public List<Item> next() {
+        List<Item> next = new ArrayList<Item>(super.next());
         if (null != mainResult) {
             if (next.size() > 0 && !next.get(0).getDetails().getAppDetails().getPackageName().equals(mainResult.getDetails().getAppDetails().getPackageName())) {
                 next.add(0, mainResult);
@@ -43,29 +43,29 @@ public class SearchIterator extends AppListIterator {
     }
 
     @Override
-    protected DocV2 getRootDoc(DocV2 doc) {
-        DocV2.Builder builder = null;
-        DocV2 mainResult = null;
-        for (DocV2 child: doc.getChildList()) {
+    protected Item getRootDoc(Item doc) {
+        Item.Builder builder = null;
+        Item mainResult = null;
+        for (Item child: doc.getSubItemList()) {
             if (!isRootDoc(child)) {
                 continue;
             }
-            if (child.getChildCount() == 1) {
-                mainResult = child.getChild(0);
+            if (child.getSubItemCount() == 1) {
+                mainResult = child.getSubItem(0);
             }
-            if (child.getDocid().contains(DOCID_FRAGMENT_MORE_RESULTS)) {
+            if (child.getId().contains(DOCID_FRAGMENT_MORE_RESULTS)) {
                 builder = child.toBuilder();
             }
         }
         if (null != mainResult && null != builder) {
             this.mainResult = mainResult;
-            return builder.addChild(0, mainResult).build();
+            return builder.addSubItem(0, mainResult).build();
         }
         return super.getRootDoc(doc);
     }
 
     @Override
-    protected boolean isRootDoc(DocV2 doc) {
-        return super.isRootDoc(doc) && doc.getDocid().contains("search");
+    protected boolean isRootDoc(Item doc) {
+        return super.isRootDoc(doc) && doc.getId().contains("search");
     }
 }

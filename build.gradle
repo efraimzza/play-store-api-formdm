@@ -5,10 +5,26 @@ version = '0.44.2'
 //sourceCompatibility = JavaVersion.VERSION_1_5
 //targetCompatibility = JavaVersion.VERSION_1_5
 // Add or modify these lines near the top of your build.gradle
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+//sourceCompatibility = 1.8
+//targetCompatibility = 1.8
+//sourceCompatibility = 8
+//targetCompatibility = 8
+sourceCompatibility = 21
+targetCompatibility = 21
 compileJava.options.encoding = 'UTF-8'
-
+//java {
+//    toolchain {
+//        languageVersion = JavaLanguageVersion.of(21)
+//    }
+//}
+compileJava {
+    options.release = 8  // או 11
+}
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
 buildscript {
     repositories {
         mavenCentral()

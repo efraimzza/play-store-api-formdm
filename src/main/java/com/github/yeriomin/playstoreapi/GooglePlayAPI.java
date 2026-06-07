@@ -414,13 +414,35 @@ public class GooglePlayAPI {
         }
         return detailsBuilder.setDocV2(docV2Builder).build();*/
     }
+    public PlayResponse detailsNew(String packageName) {
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("doc", packageName);
 
+        return client.getNew(DETAILS_URL, params, getDefaultHeaders());
+        /*ResponseWrapper w = ResponseWrapper.parseFrom(responseBytes);
+
+        DetailsResponse detailsResponse = w.getPayload().getDetailsResponse();
+        return detailsResponse;*/
+        /*
+        DetailsResponse.Builder detailsBuilder = DetailsResponse.newBuilder(detailsResponse);
+        //DocV2.Builder docV2Builder = DocV2.newBuilder(detailsResponse.getDocV2());
+        for (PreFetch prefetch: w.getPreFetchList()) {
+            Payload subPayload = prefetch.getResponse().getPayload();
+            if (subPayload.hasListResponse()) {
+                //docV2Builder.addChild(subPayload.getListResponse().getDocList().get(0));
+            }
+            if (subPayload.hasReviewResponse()) {
+                detailsBuilder.setUserReview(subPayload.getReviewResponse().getGetResponse().getReview(0));
+            }
+        }
+        return detailsBuilder.setDocV2(docV2Builder).build();*/
+    }
     /**
      * Fetches detailed information about each of the package names specified
      */
     public BulkDetailsResponse bulkDetails(List<String> packageNames) throws IOException {
         BulkDetailsRequest.Builder bulkDetailsRequestBuilder = BulkDetailsRequest.newBuilder();
-        bulkDetailsRequestBuilder.addAllDocid(packageNames);
+        bulkDetailsRequestBuilder.addAllDocId(packageNames);
         byte[] request = bulkDetailsRequestBuilder.build().toByteArray();
 
         byte[] responseBytes = client.post(BULKDETAILS_URL, request, getDefaultHeaders());
@@ -527,7 +549,7 @@ public class GooglePlayAPI {
      * This function is used for fetching download url and download cookie,
      * rather than actual purchasing.
      */
-    public BuyResponse purchase(String packageName, int versionCode, int offerType) throws IOException {
+    public BuyResponse purchase(String packageName, long versionCode, int offerType) throws IOException {
         Map<String, String> params = new HashMap<String, String>();
         params.put("ot", String.valueOf(offerType));
         params.put("doc", packageName);
@@ -545,15 +567,15 @@ public class GooglePlayAPI {
      * @param versionCode
      * @param offerType
      */
-    public DeliveryResponse delivery(String packageName, int versionCode, int offerType) throws IOException {
+    public DeliveryResponse delivery(String packageName, long versionCode, int offerType) throws IOException {
         return delivery(packageName, 0, versionCode, offerType, PATCH_FORMAT.GZIPPED_GDIFF, "");
     }
 
-    public DeliveryResponse delivery(String packageName, int versionCode, int offerType, String downloadToken) throws IOException {
+    public DeliveryResponse delivery(String packageName, long versionCode, int offerType, String downloadToken) throws IOException {
         return delivery(packageName, 0, versionCode, offerType, PATCH_FORMAT.GZIPPED_GDIFF, downloadToken);
     }
 
-    public DeliveryResponse delivery(String packageName, int installedVersionCode, int updateVersionCode, int offerType, PATCH_FORMAT patchFormat) throws IOException {
+    public DeliveryResponse delivery(String packageName, long installedVersionCode, long updateVersionCode, int offerType, PATCH_FORMAT patchFormat) throws IOException {
         return delivery(packageName, installedVersionCode, updateVersionCode, offerType, patchFormat, "");
     }
 
@@ -567,7 +589,7 @@ public class GooglePlayAPI {
      * @param offerType
      * @param patchFormat
      */
-    public DeliveryResponse delivery(String packageName, int installedVersionCode, int updateVersionCode, int offerType, PATCH_FORMAT patchFormat, String downloadToken) throws IOException {
+    public DeliveryResponse delivery(String packageName, long installedVersionCode, long updateVersionCode, int offerType, PATCH_FORMAT patchFormat, String downloadToken) throws IOException {
         Map<String, String> params = new HashMap<String, String>();
         params.put("ot", String.valueOf(offerType));
         params.put("doc", packageName);
@@ -593,19 +615,19 @@ public class GooglePlayAPI {
      * @return
      * @throws IOException
      */
-    public DeliveryResponse delivery(String packageName, int installedVersionCode, int updateVersionCode, int offerType) throws IOException {
+    public DeliveryResponse delivery(String packageName, long installedVersionCode, long updateVersionCode, int offerType) throws IOException {
         return delivery(packageName, installedVersionCode, updateVersionCode, offerType, new PATCH_FORMAT[] {PATCH_FORMAT.GDIFF, PATCH_FORMAT.GZIPPED_GDIFF, PATCH_FORMAT.GZIPPED_BSDIFF}, "");
     }
 
-    public DeliveryResponse delivery(String packageName, int installedVersionCode, int updateVersionCode, int offerType, String downloadToken) throws IOException {
+    public DeliveryResponse delivery(String packageName, long installedVersionCode, long updateVersionCode, int offerType, String downloadToken) throws IOException {
         return delivery(packageName, installedVersionCode, updateVersionCode, offerType, new PATCH_FORMAT[] {PATCH_FORMAT.GDIFF, PATCH_FORMAT.GZIPPED_GDIFF, PATCH_FORMAT.GZIPPED_BSDIFF}, downloadToken);
     }
 
-    public DeliveryResponse delivery(String packageName, int installedVersionCode, int updateVersionCode, int offerType, PATCH_FORMAT[] patchFormats) throws IOException {
+    public DeliveryResponse delivery(String packageName, long installedVersionCode, long updateVersionCode, int offerType, PATCH_FORMAT[] patchFormats) throws IOException {
         return delivery(packageName, installedVersionCode, updateVersionCode, offerType, patchFormats, "");
     }
 
-    public DeliveryResponse delivery(String packageName, int installedVersionCode, int updateVersionCode, int offerType, PATCH_FORMAT[] patchFormats, String downloadToken) throws IOException {
+    public DeliveryResponse delivery(String packageName, long installedVersionCode, long updateVersionCode, int offerType, PATCH_FORMAT[] patchFormats, String downloadToken) throws IOException {
         Map<String, List<String>> params = new HashMap<String, List<String>>();
         params.put("ot", Collections.singletonList(String.valueOf(offerType)));
         params.put("doc", Collections.singletonList(packageName));
@@ -795,7 +817,7 @@ public class GooglePlayAPI {
      * Use this with the urls which play store returns: next page urls, suggests and so on
      *
      */
-    public Payload genericGet(String url, Map<String, String> params) throws IOException {
+  /*  public Payload genericGet(String url, Map<String, String> params) throws IOException {
         if (null == params) {
             params = new HashMap<String, String>();
         }
@@ -803,16 +825,32 @@ public class GooglePlayAPI {
         ResponseWrapper wrapper = ResponseWrapper.parseFrom(responseBytes);
         Payload payload = wrapper.getPayload();
         if (wrapper.getPreFetchCount() > 0
-            && ((payload.hasSearchResponse() && payload.getSearchResponse().getDocCount() == 0)
-                || (payload.hasListResponse() && payload.getListResponse().getDocCount() == 0)
+            && ((payload.hasSearchResponse() && payload.getSearchResponse().getItemCount() == 0)
+                || (payload.hasListResponse() && payload.getListResponse().getItemCount() == 0)
                 || payload.hasBrowseResponse()
             )
         ) {
             return wrapper.getPreFetch(0).getResponse().getPayload();
         }
         return payload;
+    }*/
+   public Payload genericGet(String url, Map<String, String> params) throws IOException {
+        if (null == params) {
+            params = new HashMap<String, String>();
+        }
+        byte[] responseBytes = client.get(url, params, getDefaultHeaders());
+        ResponseWrapper wrapper = ResponseWrapper.parseFrom(responseBytes);
+        Payload payload = wrapper.getPayload();
+        if (/*wrapper.getPreFetchCount() > 0
+            &&*/ ((payload.hasSearchResponse() && payload.getSearchResponse().getItemCount() == 0)
+                || (payload.hasListResponse()/* && payload.getListResponse().getItemCount() == 0*/)
+                || payload.hasBrowseResponse()
+            )
+        ) {
+            return wrapper.getPreFetch().getResponse().getPayload();
+        }
+        return payload;
     }
-
     /**
      * Subscribe to or unsubscribe from the testing program of given app
      *
